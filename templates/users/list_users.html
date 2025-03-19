@@ -1,0 +1,86 @@
+{% extends 'users/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center text-white">All Users</h2>
+    
+    <!-- Search and Filters -->
+    <form method="GET" class="d-flex justify-content-center my-3">
+        <input type="text" name="search" id="searchInput" class="form-control w-50" 
+               placeholder="Search users by name..." value="{{ search_query }}">
+    </form>
+
+    <div class="d-flex justify-content-center mb-3">
+        <select name="role" id="roleFilter" class="form-select w-25 mx-2">
+            <option value="" {% if not selected_role %}selected{% endif %}>All Roles</option>
+            <option value="admin" {% if selected_role == "admin" %}selected{% endif %}>Admins</option>
+            <option value="supervisor" {% if selected_role == "supervisor" %}selected{% endif %}>Supervisors</option>
+            <option value="surveyor" {% if selected_role == "surveyor" %}selected{% endif %}>Surveyors</option>
+        </select>
+        
+        <select name="block" id="blockFilter" class="form-select w-25 mx-2">
+            <option value="" {% if not selected_block %}selected{% endif %}>All Blocks</option>
+            {% for block in blocks %}
+                <option value="{{ block.id }}" {% if selected_block == block.id|stringformat:"s" %}selected{% endif %}>{{ block.name }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="btn btn-primary mx-2">Apply Filters</button>
+    </div>
+
+    <!-- User Cards -->
+    <div class="row justify-content-center" id="userContainer">
+        {% for user in users %}
+        <div class="col-md-4 user-card mb-3" data-role="{{ user.role|lower }}" data-block="{{ user.block.id|default:'none' }}">
+            <div class="card text-white bg-dark">
+                <div class="card-body d-flex flex-column align-items-center" style="min-height: 180px;">
+                    <h5 class="card-title text-center">{{ user.username }}</h5>
+                    <p><strong>Role:</strong> {{ user.role }}</p>
+                    <p><strong>Block:</strong> {{ user.block|default:"Not Assigned" }}</p>
+                    
+                    <div class="d-flex justify-content-between w-100 mt-3">
+                        <a href="{% url 'edit_user' user.id %}" class="btn btn-warning btn-sm">Edit</a>
+                        <a href="{% url 'delete_user' user.id %}" class="btn btn-danger btn-sm">Delete</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-center text-white">No users found.</p>
+        {% endfor %}
+    </div>
+
+    <div class="text-center mt-3">
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</div>
+
+<!-- JavaScript to trigger filtering -->
+<script>
+    document.getElementById("searchInput").addEventListener("keyup", function () {
+        updateFilters();
+    });
+
+    document.getElementById("roleFilter").addEventListener("change", function () {
+        updateFilters();
+    });
+
+    document.getElementById("blockFilter").addEventListener("change", function () {
+        updateFilters();
+    });
+
+    function updateFilters() {
+        let searchValue = document.getElementById("searchInput").value;
+        let roleValue = document.getElementById("roleFilter").value;
+        let blockValue = document.getElementById("blockFilter").value;
+
+        let params = new URLSearchParams(window.location.search);
+        params.set("search", searchValue);
+        params.set("role", roleValue);
+        params.set("block", blockValue);
+
+        window.location.href = window.location.pathname + "?" + params.toString();
+    }
+</script>
+
+{% endblock %}

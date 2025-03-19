@@ -1,0 +1,27 @@
+{% extends 'users/base.html' %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <h2 class="text-white mb-4">Surveyor Dashboard</h2>
+    
+    <div class="d-flex justify-content-center gap-3">
+        <a href="{% url 'add_farmer' %}" class="btn btn-success btn-lg">➕ Add Farmer</a>
+        <a href="{% url 'list_farmers' %}" class="btn btn-primary btn-lg">📋 List Farmers</a>
+    </div>
+</div>
+
+<style>
+    h2 {
+        font-weight: bold;
+    }
+    .btn {
+        padding: 12px 24px;
+        font-size: 18px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.2);
+    }
+</style>
+{% endblock %}

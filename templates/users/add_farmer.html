@@ -1,0 +1,100 @@
+{% extends "users/base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center min-vh-100">
+    <div class="glass-card p-4">
+        <h2 class="text-center mb-3">👨‍🌾 Add Farmer</h2>
+
+        <!-- Error Message -->
+        {% if error %}
+            <div class="alert alert-danger text-center" role="alert">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <!-- Farmer Form -->
+        <form method="post" enctype="multipart/form-data">  <!-- Keep enctype for image upload -->
+            {% csrf_token %}
+            <div class="mb-3">
+                {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100">➕ Add Farmer</button>
+        </form>
+
+        <!-- Back Button -->
+        <div class="text-center mt-3">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-light w-100">⬅ Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Background Styling */
+    body {
+        background: linear-gradient(to right, #141e30, #243b55);
+        font-family: 'Poppins', sans-serif;
+        color: white;
+    }
+
+    /* Glassmorphism Card */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 30px;
+        width: 350px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Labels & Inputs */
+    .form-label {
+        font-weight: 600;
+    }
+    input, select {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: none;
+        outline: none;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+    input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* File Input Styling */
+    input[type="file"] {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 8px;
+        border-radius: 8px;
+    }
+    
+    /* Buttons */
+    .btn {
+        transition: all 0.3s ease-in-out;
+        padding: 10px;
+        border-radius: 8px;
+    }
+    .btn-primary {
+        background: #ff9800;
+        border: none;
+    }
+    .btn-primary:hover {
+        background: #e68a00;
+        transform: scale(1.05);
+    }
+    .btn-outline-light:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}

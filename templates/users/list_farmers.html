@@ -1,0 +1,86 @@
+{% extends 'users/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center text-white mb-4">Farmers List</h2>
+
+    <!-- Search Bar -->
+    <div class="d-flex justify-content-center mb-3">
+        <input type="text" id="searchInput" class="form-control w-50" placeholder="🔍 Search farmers by name...">
+    </div>
+
+    <!-- Farmers Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-hover text-center">
+            <thead class="table-dark">
+                <tr>
+                    <th>Name</th>
+                    <th>Aadhaar Number</th>
+                    <th>Edit</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody id="farmerTable">
+                {% for farmer in farmers %}
+                <tr>
+                    <td class="farmer-name">{{ farmer.name }}</td>
+                    <td>{{ farmer.aadhar_id }}</td>
+                    <td>
+                        <a href="{% url 'edit_farmer' farmer.id %}" class="btn btn-warning btn-sm">✏️ Edit</a>
+                    </td>
+                    <td>
+                        <form action="{% url 'delete_farmer' farmer.id %}" method="post" onsubmit="return confirm('Are you sure you want to delete this farmer?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">🗑️ Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">No farmers found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Search Functionality -->
+<script>
+    document.getElementById("searchInput").addEventListener("keyup", function () {
+        let filter = this.value.toLowerCase();
+        let rows = document.querySelectorAll("#farmerTable tr");
+
+        rows.forEach(row => {
+            let name = row.querySelector(".farmer-name").textContent.toLowerCase();
+            if (name.includes(filter)) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    });
+</script>
+
+<style>
+    h2 {
+        font-weight: bold;
+    }
+    .table {
+        background-color: #1e1e1e;
+        color: white;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .table thead {
+        background-color: #343a40;
+    }
+    .btn {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0px 3px 8px rgba(255, 255, 255, 0.2);
+    }
+</style>
+{% endblock %}

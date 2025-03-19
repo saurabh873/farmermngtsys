@@ -1,0 +1,21 @@
+{% extends 'users/base.html' %}
+
+{% block content %}
+<h2>Surveyors in Your Block</h2>
+<table border="1">
+    <tr>
+        <th>Username</th>
+        <th>Block</th>
+    </tr>
+    {% for surveyor in surveyors %}
+    <tr>
+        <td>{{ surveyor.username }}</td>
+        <td>{{ surveyor.block.name }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="2">No surveyors assigned to your block.</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
