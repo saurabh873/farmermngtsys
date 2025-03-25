@@ -5,25 +5,49 @@
     <div class="glass-card p-4">
         <h2 class="text-center mb-3">👨‍🌾 Add Farmer</h2>
 
-        <!-- Error Message -->
-        {% if error %}
-            <div class="alert alert-danger text-center" role="alert">
-                {{ error }}
+        <!-- Display Django Messages -->
+        {% if messages %}
+            <div id="message-container">
+                {% for message in messages %}
+                    <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} text-center">
+                        {{ message }}
+                    </div>
+                {% endfor %}
             </div>
         {% endif %}
 
         <!-- Farmer Form -->
-        <form method="post" enctype="multipart/form-data">  <!-- Keep enctype for image upload -->
+        <form method="post" enctype="multipart/form-data" id="farmer-form">
             {% csrf_token %}
-            <div class="mb-3">
-                {% for field in form %}
-                    <div class="mb-3">
-                        <label class="form-label">{{ field.label }}</label>
-                        {{ field }}
-                    </div>
-                {% endfor %}
-            </div>
             
+            <div class="mb-3">
+                <label class="form-label">Name</label>
+                <input type="text" name="name" class="form-control" maxlength="50" oninput="updateCharCount(this)">
+                <small id="name-char-count" class="text-light">0/50 characters</small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Aadhar ID</label>
+                <input type="text" name="aadhar_id" class="form-control" maxlength="12">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Block</label>
+                <input type="text" class="form-control" value="{{ request.user.block }}" disabled>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Profile Image</label>
+                <input type="file" name="image" class="form-control" accept="image/*" onchange="previewImage(event, 'profile-preview')">
+                <img id="profile-preview" src="#" alt="Profile Image" style="display: none; max-width: 100px; margin-top: 10px;">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Aadhar Image</label>
+                <input type="file" name="aadhar_image" class="form-control" accept="image/*" onchange="previewImage(event, 'aadhar-preview')">
+                <img id="aadhar-preview" src="#" alt="Aadhar Image" style="display: none; max-width: 100px; margin-top: 10px;">
+            </div>
+
             <button type="submit" class="btn btn-primary w-100">➕ Add Farmer</button>
         </form>
 
@@ -34,67 +58,60 @@
     </div>
 </div>
 
-<style>
-    /* Background Styling */
-    body {
-        background: linear-gradient(to right, #141e30, #243b55);
-        font-family: 'Poppins', sans-serif;
-        color: white;
+<!-- JavaScript -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Aadhar ID Validation
+    let aadharField = document.querySelector("input[name='aadhar_id']");
+    let form = document.getElementById("farmer-form");
+
+    if (aadharField) {
+        aadharField.addEventListener("input", function(event) {
+            let value = event.target.value.replace(/\D/g, '');
+            event.target.value = value.substring(0, 12);
+        });
+
+        form.addEventListener("submit", function(event) {
+            let aadharValue = aadharField.value;
+            let aadharPattern = /^\d{12}$/;
+            if (!aadharPattern.test(aadharValue)) {
+                event.preventDefault();
+                alert("Invalid Aadhar ID! It must be exactly 12 digits.");
+                aadharField.focus();
+            }
+        });
     }
 
-    /* Glassmorphism Card */
-    .glass-card {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 15px;
-        padding: 30px;
-        width: 350px;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
+    // Auto-hide messages
+    setTimeout(function() {
+        let messageContainer = document.getElementById("message-container");
+        if (messageContainer) {
+            messageContainer.style.display = "none";
+        }
+    }, 3000);
+});
 
-    /* Labels & Inputs */
-    .form-label {
-        font-weight: 600;
-    }
-    input, select {
-        width: 100%;
-        padding: 10px;
-        border-radius: 8px;
-        border: none;
-        outline: none;
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-    }
-    input::placeholder {
-        color: rgba(255, 255, 255, 0.7);
-    }
+function previewImage(event, previewId) {
+    let preview = document.getElementById(previewId);
+    let file = event.target.files[0];
 
-    /* File Input Styling */
-    input[type="file"] {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-        padding: 8px;
-        border-radius: 8px;
+    if (file) {
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    } else {
+        preview.src = "#";
+        preview.style.display = 'none';
     }
-    
-    /* Buttons */
-    .btn {
-        transition: all 0.3s ease-in-out;
-        padding: 10px;
-        border-radius: 8px;
-    }
-    .btn-primary {
-        background: #ff9800;
-        border: none;
-    }
-    .btn-primary:hover {
-        background: #e68a00;
-        transform: scale(1.05);
-    }
-    .btn-outline-light:hover {
-        background: rgba(255, 255, 255, 0.2);
-        transform: scale(1.05);
-    }
-</style>
+}
+
+function updateCharCount(input) {
+    let charCount = document.getElementById("name-char-count");
+    charCount.textContent = input.value.length + "/50 characters";
+}
+</script>
+
 {% endblock %}

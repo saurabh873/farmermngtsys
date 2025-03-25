@@ -2,11 +2,23 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2 class="text-center text-white mb-4">Farmers List</h2>
+    <h2 class="text-center text-white mb-4">🌾 Farmers List</h2>
+
+    <!-- Date Range Filter Form -->
+    <form method="GET" action="{% url 'list_farmers' %}" class="mb-3 text-center">
+        <label for="start_date" class="text-white">Start Date:</label>
+        <input type="text" id="start_date" name="start_date" value="{{ start_date }}" required>
+
+        <label for="end_date" class="text-white">End Date:</label>
+        <input type="text" id="end_date" name="end_date" value="{{ end_date }}" required>
+
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <button type="submit" name="export" value="1" class="btn btn-success">📥 Download CSV</button>
+    </form>
 
     <!-- Search Bar -->
     <div class="d-flex justify-content-center mb-3">
-        <input type="text" id="searchInput" class="form-control w-50" placeholder="🔍 Search farmers by name...">
+        <input type="text" id="searchInput" class="form-control w-50" placeholder="🔍 Search by name or Aadhaar number...">
     </div>
 
     <!-- Farmers Table -->
@@ -14,8 +26,13 @@
         <table class="table table-bordered table-striped table-hover text-center">
             <thead class="table-dark">
                 <tr>
+                    <th>#</th>
+                    <th>Photo</th>
                     <th>Name</th>
                     <th>Aadhaar Number</th>
+                    <th>Block Assigned</th>
+                    <th>Added By</th>
+                    <th>Created At</th>
                     <th>Edit</th>
                     <th>Delete</th>
                 </tr>
@@ -23,8 +40,19 @@
             <tbody id="farmerTable">
                 {% for farmer in farmers %}
                 <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        {% if farmer.image %}
+                            <img src="{{ farmer.image.url }}" alt="Farmer Image" class="farmer-img">
+                        {% else %}
+                            <img src="/static/images/default-avatar.png" alt="Default Image" class="farmer-img">
+                        {% endif %}
+                    </td>
                     <td class="farmer-name">{{ farmer.name }}</td>
-                    <td>{{ farmer.aadhar_id }}</td>
+                    <td class="farmer-aadhar">{{ farmer.aadhar_id }}</td>
+                    <td>{{ farmer.block.name }}</td>
+                    <td>{{ farmer.added_by.username }}</td>
+                    <td>{{ farmer.created_at }}</td>
                     <td>
                         <a href="{% url 'edit_farmer' farmer.id %}" class="btn btn-warning btn-sm">✏️ Edit</a>
                     </td>
@@ -37,7 +65,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="4" class="text-center">No farmers found.</td>
+                    <td colspan="9" class="text-center">No farmers found.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -45,15 +73,22 @@
     </div>
 </div>
 
-<!-- Search Functionality -->
+<!-- Flatpickr Date Picker -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
+    flatpickr("#start_date", { dateFormat: "Y-m-d", maxDate: new Date() });
+    flatpickr("#end_date", { dateFormat: "Y-m-d", maxDate: new Date() });
+
     document.getElementById("searchInput").addEventListener("keyup", function () {
         let filter = this.value.toLowerCase();
         let rows = document.querySelectorAll("#farmerTable tr");
 
         rows.forEach(row => {
             let name = row.querySelector(".farmer-name").textContent.toLowerCase();
-            if (name.includes(filter)) {
+            let aadhar = row.querySelector(".farmer-aadhar").textContent.toLowerCase();
+
+            if (name.includes(filter) || aadhar.includes(filter)) {
                 row.style.display = "";
             } else {
                 row.style.display = "none";
@@ -63,24 +98,11 @@
 </script>
 
 <style>
-    h2 {
-        font-weight: bold;
-    }
-    .table {
-        background-color: #1e1e1e;
-        color: white;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    .table thead {
-        background-color: #343a40;
-    }
-    .btn {
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .btn:hover {
-        transform: scale(1.1);
-        box-shadow: 0px 3px 8px rgba(255, 255, 255, 0.2);
-    }
+    h2 { font-weight: bold; }
+    .table { background-color: #1e1e1e; color: white; border-radius: 8px; overflow: hidden; }
+    .table thead { background-color: #343a40; }
+    .btn { transition: transform 0.2s, box-shadow 0.2s; }
+    .btn:hover { transform: scale(1.1); box-shadow: 0px 3px 8px rgba(255, 255, 255, 0.2); }
+    .farmer-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
 </style>
 {% endblock %}

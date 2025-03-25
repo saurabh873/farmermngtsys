@@ -4,28 +4,40 @@
 <div class="container mt-4">
     <h2 class="text-center text-white">All Users</h2>
     
-    <!-- Search and Filters -->
+    <!-- Search Bar -->
     <form method="GET" class="d-flex justify-content-center my-3">
-        <input type="text" name="search" id="searchInput" class="form-control w-50" 
+        <input type="text" name="search" id="searchInput" class="form-control w-75 w-md-50" 
                placeholder="Search users by name..." value="{{ search_query }}">
     </form>
 
-    <div class="d-flex justify-content-center mb-3">
-        <select name="role" id="roleFilter" class="form-select w-25 mx-2">
-            <option value="" {% if not selected_role %}selected{% endif %}>All Roles</option>
-            <option value="admin" {% if selected_role == "admin" %}selected{% endif %}>Admins</option>
-            <option value="supervisor" {% if selected_role == "supervisor" %}selected{% endif %}>Supervisors</option>
-            <option value="surveyor" {% if selected_role == "surveyor" %}selected{% endif %}>Surveyors</option>
-        </select>
+    <!-- Multi-Role & Multi-Block Filters -->
+    <div class="d-flex flex-wrap justify-content-center mb-3 gap-2">
         
-        <select name="block" id="blockFilter" class="form-select w-25 mx-2">
-            <option value="" {% if not selected_block %}selected{% endif %}>All Blocks</option>
-            {% for block in blocks %}
-                <option value="{{ block.id }}" {% if selected_block == block.id|stringformat:"s" %}selected{% endif %}>{{ block.name }}</option>
-            {% endfor %}
-        </select>
+        <!-- Role Filter -->
+        <div class="dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" id="roleDropdown">
+                Select Roles
+            </button>
+            <ul class="dropdown-menu p-2" id="roleMenu">
+                <li><label><input type="checkbox" class="role-checkbox" value="admin"> Admin</label></li>
+                <li><label><input type="checkbox" class="role-checkbox" value="supervisor"> Supervisor</label></li>
+                <li><label><input type="checkbox" class="role-checkbox" value="surveyor"> Surveyor</label></li>
+            </ul>
+        </div>
 
-        <button type="submit" class="btn btn-primary mx-2">Apply Filters</button>
+        <!-- Block Filter -->
+        <div class="dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" id="blockDropdown">
+                Select Blocks
+            </button>
+            <ul class="dropdown-menu p-2" id="blockMenu">
+                {% for block in blocks %}
+                    <li><label><input type="checkbox" class="block-checkbox" value="{{ block.id }}"> {{ block.name }}</label></li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <button onclick="applyFilters()" class="btn btn-success">Apply Filters</button>
     </div>
 
     <!-- User Cards -->
@@ -33,13 +45,23 @@
         {% for user in users %}
         <div class="col-md-4 user-card mb-3" data-role="{{ user.role|lower }}" data-block="{{ user.block.id|default:'none' }}">
             <div class="card text-white bg-dark">
-                <div class="card-body d-flex flex-column align-items-center" style="min-height: 180px;">
+                <div class="card-body d-flex flex-column align-items-center" style="min-height: 220px;">
+
+                    <!-- Display User Image -->
+                    {% if user.image %}
+                        <img src="{{ user.image.url }}" alt="Profile Image" class="rounded-circle mb-2"
+                             style="width: 80px; height: 80px; object-fit: cover;">
+                    {% else %}
+                        <img src="/static/images/default-avatar.png" alt="Default Avatar" class="rounded-circle mb-2"
+                             style="width: 80px; height: 80px; object-fit: cover;">
+                    {% endif %}
+
                     <h5 class="card-title text-center">{{ user.username }}</h5>
                     <p><strong>Role:</strong> {{ user.role }}</p>
                     <p><strong>Block:</strong> {{ user.block|default:"Not Assigned" }}</p>
                     
                     <div class="d-flex justify-content-between w-100 mt-3">
-                        <a href="{% url 'edit_user' user.id %}" class="btn btn-warning btn-sm">Edit</a>
+                        <a href="{% url 'update_user' user.id %}" class="btn btn-warning btn-sm">Edit</a>
                         <a href="{% url 'delete_user' user.id %}" class="btn btn-danger btn-sm">Delete</a>
                     </div>
                 </div>
@@ -55,32 +77,68 @@
     </div>
 </div>
 
-<!-- JavaScript to trigger filtering -->
+<!-- JavaScript for Filtering -->
 <script>
-    document.getElementById("searchInput").addEventListener("keyup", function () {
-        updateFilters();
+    // Keep dropdown open when clicking inside
+    document.querySelectorAll(".dropdown-menu").forEach(menu => {
+        menu.addEventListener("click", function (e) {
+            e.stopPropagation(); // Prevent dropdown from closing
+        });
     });
 
-    document.getElementById("roleFilter").addEventListener("change", function () {
-        updateFilters();
-    });
-
-    document.getElementById("blockFilter").addEventListener("change", function () {
-        updateFilters();
-    });
-
-    function updateFilters() {
+    function applyFilters() {
         let searchValue = document.getElementById("searchInput").value;
-        let roleValue = document.getElementById("roleFilter").value;
-        let blockValue = document.getElementById("blockFilter").value;
+        
+        // Get selected roles
+        let selectedRoles = [];
+        document.querySelectorAll(".role-checkbox:checked").forEach(checkbox => {
+            selectedRoles.push(checkbox.value);
+        });
+
+        // Get selected blocks
+        let selectedBlocks = [];
+        document.querySelectorAll(".block-checkbox:checked").forEach(checkbox => {
+            selectedBlocks.push(checkbox.value);
+        });
 
         let params = new URLSearchParams(window.location.search);
         params.set("search", searchValue);
-        params.set("role", roleValue);
-        params.set("block", blockValue);
+        if (selectedRoles.length > 0) {
+            params.set("role", selectedRoles.join(","));  // Convert list to comma-separated string
+        } else {
+            params.delete("role");
+        }
+        if (selectedBlocks.length > 0) {
+            params.set("block", selectedBlocks.join(",")); 
+        } else {
+            params.delete("block");
+        }
 
         window.location.href = window.location.pathname + "?" + params.toString();
     }
+
+    // Auto-apply filters when search input changes
+    document.getElementById("searchInput").addEventListener("keyup", function () {
+        applyFilters();
+    });
+
+    // Fix dropdowns not opening properly
+    document.querySelector("#roleDropdown").addEventListener("click", function () {
+        document.querySelector("#roleMenu").classList.toggle("show");
+    });
+
+    document.querySelector("#blockDropdown").addEventListener("click", function () {
+        document.querySelector("#blockMenu").classList.toggle("show");
+    });
+
+    // Close dropdowns when clicking outside
+    window.addEventListener("click", function (event) {
+        if (!event.target.matches(".dropdown-toggle")) {
+            document.querySelectorAll(".dropdown-menu").forEach(menu => {
+                menu.classList.remove("show");
+            });
+        }
+    });
 </script>
 
 {% endblock %}

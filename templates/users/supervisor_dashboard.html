@@ -1,21 +1,30 @@
 {% extends 'users/base.html' %}
 
 {% block content %}
-<h2>Surveyors in Your Block</h2>
-<table border="1">
-    <tr>
-        <th>Username</th>
-        <th>Block</th>
-    </tr>
-    {% for surveyor in surveyors %}
-    <tr>
-        <td>{{ surveyor.username }}</td>
-        <td>{{ surveyor.block.name }}</td>
-    </tr>
-    {% empty %}
-    <tr>
-        <td colspan="2">No surveyors assigned to your block.</td>
-    </tr>
-    {% endfor %}
-</table>
+<div class="container mt-4">
+    <h2 class="mb-3 text-primary">Surveyors in Your Block</h2>
+
+    {% if surveyors %}
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>👤 Username</th>
+                    <th>📍 Block</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for surveyor in surveyors %}
+                <tr>
+                    <td>{{ surveyor.username }}</td>
+                    <td>{{ surveyor.block.name }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="alert alert-warning" role="alert">
+            ⚠ No surveyors assigned to your block.
+        </div>
+    {% endif %}
+</div>
 {% endblock %}

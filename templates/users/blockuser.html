@@ -1,0 +1,28 @@
+<!-- block_daily_farmer_count.html -->
+
+{% extends 'users/base.html' %}
+
+{% block content %}
+  <h1>Farmers Added in Block: {{ farmer_count.block.name }} - {{ today }}</h1>
+
+  {% if farmer_count %}
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Surveyor</th>
+          <th>Block</th>
+          <th>Farmers Added Today</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ farmer_count.user.username }}</td>
+          <td>{{ farmer_count.block.name }}</td>
+          <td>{{ farmer_count.farmer_count }}</td>
+        </tr>
+      </tbody>
+    </table>
+  {% else %}
+    <p>No farmers added in this block today.</p>
+  {% endif %}
+{% endblock %}

@@ -1,23 +1,59 @@
 {% extends "users/base.html" %}
 {% block content %}
-<div class="card p-4 shadow-lg">
-    <div class="card-header bg-primary text-white text-center">
-        <h3>My Profile</h3>
-    </div>
-    <div class="card-body">
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {% for field in form %}
-                <div class="mb-3">
-                    <label class="form-label fw-bold">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.errors %}
-                        <div class="text-danger">{{ field.errors|striptags }}</div>
+<div class="container mt-4">
+    <div class="card p-4 shadow-lg">
+        <div class="card-header bg-primary text-white text-center">
+            <h3>My Profile</h3>
+        </div>
+        <div class="card-body text-center">
+
+            <!-- Display Profile Image -->
+            <div class="mb-3">
+                {% if user.image %}
+                    <img src="{{ user.image.url }}" alt="Profile Image" class="rounded-circle shadow" 
+                         style="width: 120px; height: 120px; object-fit: cover;">
+                {% else %}
+                    <img src="/static/images/default-avatar.png" alt="Default Avatar" class="rounded-circle shadow" 
+                         style="width: 120px; height: 120px; object-fit: cover;">
+                {% endif %}
+            </div>
+
+            <!-- Profile Information (Static Display) -->
+            <div class="text-start mb-4">
+                <p><strong>Username:</strong> {{ user.username }}</p>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+                <p><strong>Role:</strong> {{ user.role|title }}</p>
+                <p><strong>Block:</strong> {{ user.block.name|default:"Not Assigned" }}</p>
+                <p><strong>Created By:</strong> {{ user.created_by.username|default:"Admin" }}</p>
+                <p><strong>Created At:</strong> {{ user.created_at|default:"-"|date:"d M Y, H:i A" }}</p>
+                <p><strong>Last Updated:</strong> {{ user.last_updated_at|default:"-"|date:"d M Y, H:i A" }}</p>
+
+            </div>
+
+            <!-- Profile Update Form -->
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                {% for field in form %}
+                    {% if field.name not in "created_by created_at last_updated" %}
+                        <div class="mb-3 text-start">
+                            <label class="form-label fw-bold">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger">{{ field.errors|striptags }}</div>
+                            {% endif %}
+                        </div>
                     {% endif %}
-                </div>
-            {% endfor %}
-            <button type="submit" class="btn btn-success w-100">Update Profile</button>
-        </form>
+                {% endfor %}
+
+                <button type="submit" class="btn btn-success w-100">Update Profile</button>
+            </form>
+
+            <!-- Back to Dashboard Button -->
+            <div class="text-center mt-3">
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

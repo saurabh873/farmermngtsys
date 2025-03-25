@@ -1,0 +1,61 @@
+{% extends "users/base.html" %}
+
+{% block content %}
+<div class="card p-4 shadow-lg">
+    <div class="card-header bg-primary text-white text-center">
+        <h3>Edit User</h3>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="text-danger">{{ field.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <!-- Image Preview Section -->
+            <div class="mb-3 text-center">
+                {% if user.image %}
+                    <img id="image-preview" src="{{ user.image.url }}" alt="Profile Image"
+                        class="img-thumbnail rounded-circle" style="max-width: 150px; max-height: 150px;">
+                {% else %}
+                    <img id="image-preview" src="#" alt="Profile Image Preview"
+                        class="img-thumbnail rounded-circle d-none" style="max-width: 150px; max-height: 150px;">
+                {% endif %}
+            </div>
+
+            <!-- Remove Image Checkbox -->
+            {% if user.image %}
+            <div class="mb-3">
+                <input type="checkbox" name="remove_image" id="remove_image">
+                <label for="remove_image">Remove current profile picture</label>
+            </div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-success w-100">Update</button>
+        </form>
+
+        <a href="{% url 'list_users' %}" class="btn btn-secondary w-100 mt-3">Back</a>
+    </div>
+</div>
+
+<!-- Image Preview Script -->
+<script>
+    document.getElementById("id_image").addEventListener("change", function(event) {
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let imgPreview = document.getElementById("image-preview");
+            imgPreview.src = e.target.result;
+            imgPreview.classList.remove("d-none");
+        }
+        reader.readAsDataURL(event.target.files[0]);
+    });
+</script>
+
+{% endblock %}

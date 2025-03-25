@@ -3,9 +3,20 @@
 {% block content %}
 <div class="card p-4 shadow-lg">
     <div class="card-header bg-primary text-white text-center">
-        <h3>{% if user %}Edit User{% else %}Create User{% endif %}</h3>
+        <h3>Create User</h3>
     </div>
     <div class="card-body">
+        
+        <!-- Alert Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
 
@@ -21,26 +32,11 @@
 
             <!-- Image Preview Section -->
             <div class="mb-3 text-center">
-                {% if user.image %}
-                    <img id="image-preview" src="{{ user.image.url }}" alt="Profile Image"
-                        class="img-thumbnail rounded-circle" style="max-width: 150px; max-height: 150px;">
-                {% else %}
-                    <img id="image-preview" src="#" alt="Profile Image Preview"
-                        class="img-thumbnail rounded-circle d-none" style="max-width: 150px; max-height: 150px;">
-                {% endif %}
+                <img id="image-preview" src="#" alt="Profile Image Preview"
+                    class="img-thumbnail rounded-circle d-none" style="max-width: 150px; max-height: 150px;">
             </div>
 
-            <!-- Remove Image Checkbox -->
-            {% if user.image %}
-            <div class="mb-3">
-                <input type="checkbox" name="remove_image" id="remove_image">
-                <label for="remove_image">Remove current profile picture</label>
-            </div>
-            {% endif %}
-
-            <button type="submit" class="btn btn-success w-100">
-                {% if user %}Update{% else %}Create{% endif %}
-            </button>
+            <button type="submit" class="btn btn-success w-100">Create</button>
         </form>
 
         <a href="{% url 'list_users' %}" class="btn btn-secondary w-100 mt-3">Back</a>

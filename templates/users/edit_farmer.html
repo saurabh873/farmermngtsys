@@ -1,0 +1,91 @@
+{% extends "users/base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center min-vh-100">
+    <div class="glass-card p-4">
+        <h2 class="text-center mb-3">✏ Edit Farmer</h2>
+
+        <!-- Display Django Messages -->
+        {% if messages %}
+            <div id="message-container">
+                {% for message in messages %}
+                    <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} text-center">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Farmer Form -->
+        <form method="post" enctype="multipart/form-data" id="farmer-form">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label class="form-label">Name</label>
+                <input type="text" name="name" class="form-control" maxlength="50" value="{{ farmer.name }}" oninput="updateCharCount(this)">
+                <small id="name-char-count" class="text-light">{{ farmer.name|length }}/50 characters</small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Aadhar ID</label>
+                <input type="text" name="aadhar_id" class="form-control" maxlength="12" value="{{ farmer.aadhar_id }}">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Block</label>
+                <input type="text" class="form-control" value="{{ request.user.block }}" disabled>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Profile Image</label>
+                <input type="file" name="image" class="form-control" accept="image/*" onchange="previewImage(event, 'profile-preview')">
+                <img id="profile-preview" src="{{ farmer.image.url }}" alt="Profile Image" style="max-width: 100px; margin-top: 10px;">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Aadhar Image</label>
+                <input type="file" name="aadhar_image" class="form-control" accept="image/*" onchange="previewImage(event, 'aadhar-preview')">
+                <img id="aadhar-preview" src="{{ farmer.aadhar_image.url }}" alt="Aadhar Image" style="max-width: 100px; margin-top: 10px;">
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">✔ Update Farmer</button>
+        </form>
+
+        <!-- Back Button -->
+        <div class="text-center mt-3">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-light w-100">⬅ Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript (Same as Add) -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    setTimeout(function() {
+        let messageContainer = document.getElementById("message-container");
+        if (messageContainer) {
+            messageContainer.style.display = "none";
+        }
+    }, 3000);
+});
+
+function previewImage(event, previewId) {
+    let preview = document.getElementById(previewId);
+    let file = event.target.files[0];
+
+    if (file) {
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+function updateCharCount(input) {
+    let charCount = document.getElementById("name-char-count");
+    charCount.textContent = input.value.length + "/50 characters";
+}
+</script>
+
+{% endblock %}

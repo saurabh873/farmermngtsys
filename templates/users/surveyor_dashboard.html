@@ -4,11 +4,41 @@
 <div class="container text-center mt-5">
     <h2 class="text-white mb-4">Surveyor Dashboard</h2>
     
-    <div class="d-flex justify-content-center gap-3">
+    <div class="d-flex justify-content-center gap-3 mb-4">
         <a href="{% url 'add_farmer' %}" class="btn btn-success btn-lg">➕ Add Farmer</a>
         <a href="{% url 'list_farmers' %}" class="btn btn-primary btn-lg">📋 List Farmers</a>
     </div>
+
+    <!-- Farmer Count Info -->
+    <div class="card bg-dark text-white p-3">
+        <h4>📊 Farmer Statistics</h4>
+        <p><strong>Your Farmers Today:</strong> <span id="my_count">0</span></p>
+        <p><strong>Total Farmers in Your Block:</strong> <span id="block_count">0</span></p>
+    </div>
 </div>
+
+<!-- JavaScript for Real-Time Updates -->
+<script>
+    function fetchRealTimeCounts() {
+        fetch("{% url 'get_real_time_counts' %}")
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error("Error:", data.error);
+            } else {
+                document.getElementById('my_count').innerText = data.my_count;
+                document.getElementById('block_count').innerText = data.block_count;
+            }
+        })
+        .catch(error => console.error("Fetch Error:", error));
+    }
+
+    // Fetch counts every 5 seconds
+    setInterval(fetchRealTimeCounts, 5000);
+    
+    // Fetch initially when page loads
+    fetchRealTimeCounts();
+</script>
 
 <style>
     h2 {
@@ -22,6 +52,11 @@
     .btn:hover {
         transform: scale(1.05);
         box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.2);
+    }
+    .card {
+        max-width: 400px;
+        margin: 20px auto;
+        border-radius: 10px;
     }
 </style>
 {% endblock %}
