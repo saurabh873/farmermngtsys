@@ -2,9 +2,8 @@ from django.urls import path
 from users import views
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import FarmerViewSet
-router = DefaultRouter()
-router.register(r'farmers', FarmerViewSet)
+from .views import*
+
 
 urlpatterns = [
    path('login/', views.login_view, name='login'),
@@ -26,7 +25,8 @@ urlpatterns = [
     path('add-farmer/', views.add_farmer, name='add_farmer'),
     path('edit-farmer/<int:farmer_id>/', views.edit_farmer, name='edit_farmer'),
     path('get_real_time_counts/', views.get_real_time_counts, name='get_real_time_counts'),
-    path('api/', include(router.urls)),  
+   #  path('api/', include(router.urls)),  
+    path('api/farmers/', FarmerView.as_view(), name='farmer-api'),
 
 
 

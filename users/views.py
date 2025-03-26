@@ -1,5 +1,6 @@
 import csv
 from datetime import datetime
+import json
 from time import localtime
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import authenticate, login, logout
@@ -21,6 +22,16 @@ import sys
 from rest_framework import viewsets, permissions
 from .models import Farmer
 from .serializers import FarmerSerializer
+from django.middleware.csrf import get_token
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.http import JsonResponse
+from rest_framework import generics, permissions
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.exceptions import PermissionDenied
+from .models import Farmer, Block, User
+from .serializers import FarmerSerializer
 
 def role_required(roles):
     def decorator(view_func):
@@ -39,20 +50,47 @@ def role_required(roles):
 
 
 def login_view(request):
-    if request.user.is_authenticated:
-        return redirect('dashboard')
+    # ✅ If GET request → Show Login Page (HTML)
+    if request.method == "GET":
+        # If the request is from Postman (API request), return CSRF token
+        if request.headers.get("Accept") == "application/json":
+            csrf_token = get_token(request)
+            return JsonResponse({"csrf_token": csrf_token})
+        
+        # Otherwise, render the login template
+        return render(request, "users/login.html")
 
-    form = LoginForm(request, data=request.POST or None)
-    if request.method == 'POST' and form.is_valid():
-        user = form.get_user()
+    # ✅ If POST request → Handle Login (API)
+    if request.method == "POST":
+        # Handle JSON request (API)
+        if request.content_type == "application/json":
+            try:
+                data = json.loads(request.body.decode("utf-8"))
+                username = data.get("username")
+                password = data.get("password")
+            except json.JSONDecodeError:
+                return JsonResponse({"error": "Invalid JSON"}, status=400)
+        
+        # Handle form data request (HTML login)
+        else:
+            username = request.POST.get("username")
+            password = request.POST.get("password")
+
+        user = authenticate(username=username, password=password)
         if user:
             login(request, user)
-              # 30 minutes session expiry
-            return redirect('dashboard')
-        else:
-            print("login_view: Authentication failed", file=sys.stderr)
-    
-    return render(request, 'users/login.html', {'form': form})
+            # If API request → return JSON
+            if request.content_type == "application/json":
+                return JsonResponse({"message": "Login successful"}, status=200)
+            # If normal form login → redirect to dashboard
+            return redirect("dashboard")
+
+        # Invalid login
+        if request.content_type == "application/json":
+            return JsonResponse({"error": "Invalid credentials"}, status=400)
+        return render(request, "users/login.html", {"error": "Invalid credentials"})
+
+    return JsonResponse({"error": "Method not allowed"}, status=405)
 
 @login_required
 def logout_view(request):
@@ -498,10 +536,54 @@ def get_real_time_counts(request):
 
 
 
-class FarmerViewSet(viewsets.ModelViewSet):
-    queryset = Farmer.objects.all()
-    serializer_class = FarmerSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
-    def perform_create(self, serializer):
-        serializer.save(added_by=self.request.user)  # Assign logged-in user
+
+
+from rest_framework import status
+
+
+
+@method_decorator(login_required, name='dispatch')
+class FarmerView(APIView):
+    """
+    API to handle both:
+    - Creating a farmer (POST) - Only Surveyors can add farmers.
+    - Listing farmers (GET) - Admins, Supervisors, and Surveyors can view farmers.
+    """
+
+    def get(self, request, *args, **kwargs):
+        """Handles fetching farmers based on user role."""
+        user = request.user
+
+        if user.role == "admin":
+            farmers = Farmer.objects.all()
+        elif user.role == "supervisor":
+            farmers = Farmer.objects.filter(block=user.block)
+        elif user.role == "surveyor":
+            farmers = Farmer.objects.filter(added_by=user)
+        else:
+            return Response({"error": "Unauthorized access"}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = FarmerSerializer(farmers, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        """Handles creating a new farmer (only for surveyors)."""
+        if request.user.role != "surveyor":
+            raise PermissionDenied("Only surveyors can add farmers.")
+
+        assigned_block = request.user.block
+        if not assigned_block:
+            return Response({"error": "Surveyor is not assigned to any block."}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = FarmerSerializer(data=request.data)
+        if serializer.is_valid():
+            aadhar_id = serializer.validated_data.get('aadhar_id')
+            if Farmer.objects.filter(aadhar_id=aadhar_id).exists():
+                return Response({"error": "A farmer with this Aadhar ID already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+            farmer = serializer.save(added_by=request.user, block=assigned_block)
+            return Response(FarmerSerializer(farmer).data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
