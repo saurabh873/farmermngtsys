@@ -49,20 +49,30 @@ def role_required(roles):
     return decorator
 
 
+import json
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from django.contrib.auth import authenticate, login
+from django.middleware.csrf import get_token
+
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import authenticate, login
+from django.middleware.csrf import get_token
+from django.http import JsonResponse
+from django.shortcuts import render, redirect
+import json
+
 def login_view(request):
-    # ✅ If GET request → Show Login Page (HTML)
+    form = AuthenticationForm()  # Django's built-in login form
+
     if request.method == "GET":
-        # If the request is from Postman (API request), return CSRF token
         if request.headers.get("Accept") == "application/json":
             csrf_token = get_token(request)
             return JsonResponse({"csrf_token": csrf_token})
-        
-        # Otherwise, render the login template
-        return render(request, "users/login.html")
 
-    # ✅ If POST request → Handle Login (API)
+        return render(request, "users/login.html", {"form": form})
+
     if request.method == "POST":
-        # Handle JSON request (API)
         if request.content_type == "application/json":
             try:
                 data = json.loads(request.body.decode("utf-8"))
@@ -70,27 +80,27 @@ def login_view(request):
                 password = data.get("password")
             except json.JSONDecodeError:
                 return JsonResponse({"error": "Invalid JSON"}, status=400)
-        
-        # Handle form data request (HTML login)
         else:
-            username = request.POST.get("username")
-            password = request.POST.get("password")
+            form = AuthenticationForm(request, data=request.POST)
+            if form.is_valid():
+                username = form.cleaned_data["username"]
+                password = form.cleaned_data["password"]
+            else:
+                return render(request, "users/login.html", {"form": form})
 
         user = authenticate(username=username, password=password)
         if user:
             login(request, user)
-            # If API request → return JSON
             if request.content_type == "application/json":
                 return JsonResponse({"message": "Login successful"}, status=200)
-            # If normal form login → redirect to dashboard
             return redirect("dashboard")
 
-        # Invalid login
-        if request.content_type == "application/json":
-            return JsonResponse({"error": "Invalid credentials"}, status=400)
-        return render(request, "users/login.html", {"error": "Invalid credentials"})
+        form.add_error(None, "Invalid credentials")
+        return render(request, "users/login.html", {"form": form})
 
     return JsonResponse({"error": "Method not allowed"}, status=405)
+
+
 
 @login_required
 def logout_view(request):
